@@ -1,22 +1,59 @@
 
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>User Profile</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <title>View Profile</title>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
 </head>
 <body>
-  <h1>User Profile</h1>
-  <div id="profile">
-    <img id="profilePic" src="" alt="Profile Picture">
-    <h2 id="username"></h2>
-    <p id="bio"></p>
-    <h3>Games</h3>
-    <ul id="gamesList"></ul>
-    <h3>Social Links</h3>
-    <ul id="socialLinks"></ul>
-  </div>
+  <h2>User Profile</h2>
+  <div id="profile"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD4EM8VrZEiuURfWEoPN_S4zbdEDuiIkoY",
+      authDomain: "yourprofile-9e8be.firebaseapp.com",
+      projectId: "yourprofile-9e8be",
+      storageBucket: "yourprofile-9e8be.firebasestorage.app",
+      messagingSenderId: "1027291924009",
+      appId: "1:1027291924009:web:3822161c22da18a3a2fe38"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Get username from URL
+    const params = new URLSearchParams(window.location.search);
+    const user = params.get("user");
+
+    async function loadProfile() {
+      if (!user) {
+        document.getElementById("profile").innerText = "No user specified!";
+        return;
+      }
+
+      const docRef = doc(db, "users", user);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        document.getElementById("profile").innerHTML = `
+          <h3>${data.username}</h3>
+          <p>${data.description}</p>
+          <img src="${data.imageURL}" width="200"><br>
+          <a href="${data.link}" target="_blank">My Link</a>
+        `;
+      } else {
+        document.getElementById("profile").innerText = "Profile not found!";
+      }
+    }
+
+    loadProfile();
+  </script>
 </body>
 </html>
