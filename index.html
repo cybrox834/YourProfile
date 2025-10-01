@@ -5,6 +5,7 @@
   <title>Create Profile</title>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js"></script>
 </head>
 <body>
   <h2>Create Your Profile</h2>
@@ -15,8 +16,8 @@
     <label>Description:</label><br>
     <textarea id="description"></textarea><br><br>
 
-    <label>Image URL:</label><br>
-    <input type="text" id="imageURL"><br><br>
+    <label>Upload Image:</label><br>
+    <input type="file" id="imageFile" accept="image/*" required><br><br>
 
     <label>Link (Discord, Website, etc):</label><br>
     <input type="text" id="link"><br><br>
@@ -27,10 +28,11 @@
   <p id="message"></p>
 
   <script type="module">
-    // Firebase Config
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
     import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
 
+    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyD4EM8VrZEiuURfWEoPN_S4zbdEDuiIkoY",
       authDomain: "yourprofile-9e8be.firebaseapp.com",
@@ -42,19 +44,37 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const storage = getStorage(app);
 
     document.getElementById("profileForm").addEventListener("submit", async (e) => {
       e.preventDefault();
+
       const username = document.getElementById("username").value;
       const description = document.getElementById("description").value;
-      const imageURL = document.getElementById("imageURL").value;
       const link = document.getElementById("link").value;
+      const fileInput = document.getElementById("imageFile");
+      const file = fileInput.files[0];
 
+      if (!file) {
+        alert("Please select an image!");
+        return;
+      }
+
+      // Upload image to Firebase Storage
+      const storageRef = ref(storage, 'images/' + username + '_' + file.name);
+      await uploadBytes(storageRef, file);
+      const imageURL = await getDownloadURL(storageRef);
+
+      // Save profile data to Firestore
       await setDoc(doc(db, "users", username), {
-        username, description, imageURL, link
+        username,
+        description,
+        imageURL,
+        link
       });
 
-      document.getElementById("message").innerText = "Profile saved! Share this link: profile.html?user=" + username;
+      document.getElementById("message").innerText = `Profile saved! Share this link: profile.html?user=${username}`;
+      document.getElementById("profileForm").reset();
     });
   </script>
 </body>
